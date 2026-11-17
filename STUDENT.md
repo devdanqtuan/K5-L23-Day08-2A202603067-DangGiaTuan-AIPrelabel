@@ -1,13 +1,13 @@
 # Thông tin học viên
 
-- Họ và tên: <<>>
-- MSHV: <<>>
-- Lớp (L2 / L3 / khác): <<>>
-- Tài khoản GitHub: <<>>
-- Repo bài nộp (URL): <<>>
-- Commit chốt bài (hash): <<>>
-- Máy: <<hệ điều hành, GPU (CUDA / MPS / không có)>>
-- CVAT (Docker): <<phiên bản, ví dụ v2.81.0>>
+- Họ và tên: Đặng Gia Tuấn
+- MSHV: 2A202603067
+- Lớp (L2 / L3 / khác): L23
+- Tài khoản GitHub: devdanqtuan
+- Repo bài nộp (URL): https://github.com/devdanqtuan/K5-L23-Day08-2A202603067-DangGiaTuan-AIPrelabel
+- Commit chốt bài (hash): [cập nhật sau khi hoàn thành toàn bộ bài lab]
+- Máy: Windows 11, NVIDIA GeForce RTX 4060 Laptop GPU (8GB, CUDA 12.7)
+- CVAT (Docker): v2.74.1
 
 ## Kết quả tóm tắt (điền cuối bài; số lấy từ `submission/qc/*`, kèm mẫu số)
 
