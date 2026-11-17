@@ -106,9 +106,3 @@
 
 ## 8. Ghi chú cá nhân
 
-- **Dùng AI để làm bài** (công cụ nào, việc gì, kiểm tra thế nào; "không dùng" nếu không): Sử dụng Antigravity AI Assistant để giải thích quy trình lab, kiểm tra môi trường và viết script hỗ trợ kiểm thử. Tất cả kết luận, nhận xét và nhãn duyệt đều được tự kiểm tra và thẩm định bằng tay.
-- Gold có bị nhiễm không (bạn có nhìn pre-label hay hỏi AI trước khi gán xong)? Không. 4 ảnh gold được gán tay độc lập 100% trên CVAT theo đúng guideline v1.0, tuyệt đối không chạy model hay nhìn trước pre-label.
-- Máy / GPU / CVAT dùng; vướng mắc cài đặt: Windows 11, GPU NVIDIA GeForce RTX 4060 Laptop (8GB VRAM, CUDA 12.7), CVAT v2.74.1 Docker local.
-- Dùng cache `data/cache/` thay vì tự chạy? Không, tự chạy các mô hình cục bộ.
-- Lỗi / bug script đã gặp (nếu có): Không gặp lỗi nghiêm trọng; cần lưu ý bọc nháy kép các tham số có dấu phẩy trên PowerShell Windows.
-- Một điều bạn làm khác lần sau: Sẽ thực hiện nghiêm túc hơn bước ẩn nhãn máy quét trước để không bị thiên kiến tự động hóa đánh lừa ở các bẫy sai nhãn lớp.
