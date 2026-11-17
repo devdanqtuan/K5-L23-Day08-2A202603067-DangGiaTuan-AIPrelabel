@@ -10,10 +10,12 @@
 | three_wheeler | <<YOLOE-26s, prompt: ...>> | <<>> | <<>> |
 
 - Lệnh `merge_prelabels.py` đã dùng (dán nguyên): <<>>
-- **Phiên bản SAM bạn chọn** (SAM 1 / 2.1 / 3) và lý do: <<chất lượng mask, tốc độ, RAM, quyền truy cập>>
-- Lỗi nào **không sửa được bằng đổi ngưỡng** (ví dụ tuk-tuk bị gọi `car`)? Sửa thế nào? <<>>
-- Box **điểm cao mà sai** hoặc **điểm thấp mà đúng** (ảnh nào): <<>>
-- Giới hạn: chọn ngưỡng trên chính gold (4 ảnh) nên số đo máy trên gold là lạc quan: <<>>
+- **Phiên bản SAM bạn chọn** (SAM 1 / 2.1 / 3) và lý do: Chọn **SAM 2.1** (`sam2.1_b.pt`). Lý do: Cho đường viền polygon sắc nét, bám sát mép nan hoa và vòm mui xe trên ảnh phố châu Á, cân bằng tối ưu giữa độ chính xác hình học và tài nguyên máy; không yêu cầu duyệt quyền truy cập phức tạp như SAM 3.
+- Lỗi nào **không sửa được bằng đổi ngưỡng** (ví dụ tuk-tuk bị gọi `car`)? Sửa thế nào? Lỗi gán sai ngữ nghĩa lớp (semantic misclassification) do detector danh mục đóng COCO (YOLO26) không có nhãn `three_wheeler` nên gán nhầm thành `car` hoặc `truck`. Lỗi này không thể sửa bằng cách nâng hay hạ ngưỡng conf (nâng ngưỡng thì mất hẳn xe, hạ ngưỡng thì thêm box rác). Cách sửa: Kết hợp mô hình open-vocabulary (YOLOE-26s) với prompt chuyên biệt (`tuk-tuk`, `cyclo`, `cargo tricycle`) và dùng `merge_prelabels.py` ưu tiên lớp `three_wheeler` đè lên `car`/`truck` khi IoU >= 0.6.
+- Box **điểm cao mà sai** hoặc **điểm thấp mà đúng** (ảnh nào):
+  - *Điểm cao mà sai:* Trên `img_002.jpg`, YOLO26 phát hiện chiếc xe tuk-tuk màu xanh tiền cảnh gán nhãn `car` với độ tin cậy rất cao (~0.85); trên `img_013.jpg`, tuk-tuk cũng bị gán nhãn `car` với điểm cao (~0.78).
+  - *Điểm thấp mà đúng:* Trên `img_011.jpg`, YOLOE phát hiện phương tiện ba bánh với conf chỉ 0.28 nhưng nhận định chính xác là `three_wheeler`.
+- Giới hạn: chọn ngưỡng trên chính gold (4 ảnh) nên số đo máy trên gold là lạc quan: <<sẽ chốt ở Part 3>>
 
 ## 2. AI error profile (từ `qc/review_stats.md`)
 
