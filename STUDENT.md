@@ -2,7 +2,7 @@
 
 - Họ và tên: Đặng Gia Tuấn
 - MSHV: 2A202603067
-- Lớp (L2 / L3 / khác): L23
+- Lớp (L2 / L3 / khác): L2
 - Tài khoản GitHub: devdanqtuan
 - Repo bài nộp (URL): https://github.com/devdanqtuan/K5-L23-Day08-2A202603067-DangGiaTuan-AIPrelabel
 - Commit chốt bài (hash): b2998cafca99327dc59ba7aa57279ed4f55a02f8
