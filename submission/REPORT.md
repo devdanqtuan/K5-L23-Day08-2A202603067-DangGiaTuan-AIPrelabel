@@ -6,16 +6,19 @@
 
 | Lớp | Model + cỡ | Ngưỡng | Vì sao (dẫn `run_id` trong `model_log.csv`) |
 |---|---|---|---|
-| person / bicycle / motorbike / car / bus / truck | <<YOLO26m>> | <<theo lớp, từ threshold_sweep>> | <<>> |
-| three_wheeler | <<YOLOE-26s, prompt: ...>> | <<>> | <<>> |
+| person | YOLO26m | 0.30 | Tại conf 0.30 recall đạt cao nhất (88.9%, 16/18 vật) với F1=0.604; không đạt 90% do có 2 người ở xa bị che khuất. Dẫn run `r01` & `r05`. |
+| motorbike | YOLO26m | 0.30 | Tại conf 0.30 recall đạt tối đa 77.8% (7/9 vật) với F1=0.636; giữ 0.30 để tránh sinh quá nhiều box rác ở nền xa như ở conf 0.1-0.2. Dẫn run `r01` & `r05`. |
+| car | YOLO26m | 0.30 | Tại conf 0.30 recall đạt tối đa 87.5% (7/8 vật), precision đạt 63.6%, F1=0.700. Dẫn run `r01` & `r05`. |
+| bicycle / bus / truck | YOLO26m | 0.30 | Số lượng vật thể trong 4 ảnh gold quá ít (< 5 vật: bicycle=3, bus=1, truck=0); tuân thủ đúng quy tắc thống kê mẫu nhỏ: không chọn ngưỡng riêng mà giữ mặc định 0.30. |
+| three_wheeler | YOLOE-26s, prompt: tuk-tuk, cyclo, cargo tricycle | 0.25 | Tại conf 0.25-0.30 recall đạt tối đa 85.7% (6/7 vật trên gold). YOLOE giải quyết điểm mù của YOLO26 cho xe ba bánh địa phương. Dẫn run `r03` & `r06`. |
 
-- Lệnh `merge_prelabels.py` đã dùng (dán nguyên): <<>>
+- Lệnh `merge_prelabels.py` đã dùng (dán nguyên): `python scripts/merge_prelabels.py work/prelabel/yoloe_all/pre.coco.json work/prelabel/y26_all/pre.coco.json --thr "three_wheeler=0.25,person=0.3,motorbike=0.3,car=0.3" --conf 0.3 --iou 0.6 --split "batch,gold" --out work/prelabel/merged_review/pre.coco.json`
 - **Phiên bản SAM bạn chọn** (SAM 1 / 2.1 / 3) và lý do: Chọn **SAM 2.1** (`sam2.1_b.pt`). Lý do: Cho đường viền polygon sắc nét, bám sát mép nan hoa và vòm mui xe trên ảnh phố châu Á, cân bằng tối ưu giữa độ chính xác hình học và tài nguyên máy; không yêu cầu duyệt quyền truy cập phức tạp như SAM 3.
 - Lỗi nào **không sửa được bằng đổi ngưỡng** (ví dụ tuk-tuk bị gọi `car`)? Sửa thế nào? Lỗi gán sai ngữ nghĩa lớp (semantic misclassification) do detector danh mục đóng COCO (YOLO26) không có nhãn `three_wheeler` nên gán nhầm thành `car` hoặc `truck`. Lỗi này không thể sửa bằng cách nâng hay hạ ngưỡng conf (nâng ngưỡng thì mất hẳn xe, hạ ngưỡng thì thêm box rác). Cách sửa: Kết hợp mô hình open-vocabulary (YOLOE-26s) với prompt chuyên biệt (`tuk-tuk`, `cyclo`, `cargo tricycle`) và dùng `merge_prelabels.py` ưu tiên lớp `three_wheeler` đè lên `car`/`truck` khi IoU >= 0.6.
 - Box **điểm cao mà sai** hoặc **điểm thấp mà đúng** (ảnh nào):
   - *Điểm cao mà sai:* Trên `img_002.jpg`, YOLO26 phát hiện chiếc xe tuk-tuk màu xanh tiền cảnh gán nhãn `car` với độ tin cậy rất cao (~0.85); trên `img_013.jpg`, tuk-tuk cũng bị gán nhãn `car` với điểm cao (~0.78).
   - *Điểm thấp mà đúng:* Trên `img_011.jpg`, YOLOE phát hiện phương tiện ba bánh với conf chỉ 0.28 nhưng nhận định chính xác là `three_wheeler`.
-- Giới hạn: chọn ngưỡng trên chính gold (4 ảnh) nên số đo máy trên gold là lạc quan: <<sẽ chốt ở Part 3>>
+- Giới hạn: chọn ngưỡng trên chính gold (4 ảnh) nên số đo máy trên gold là lạc quan: Chọn và chấm trên cùng dữ liệu (in-sample) nên precision và recall đo được trên tập gold lạc quan hơn thực tế trên 24 ảnh batch. Mẫu 4 ảnh chỉ mang tính ước lượng thô; các lớp dưới 5 mẫu (bicycle=3, bus=1, truck=0) không đủ độ tin cậy để đưa ra kết luận thống kê mạnh.
 
 ## 2. AI error profile (từ `qc/review_stats.md`)
 
