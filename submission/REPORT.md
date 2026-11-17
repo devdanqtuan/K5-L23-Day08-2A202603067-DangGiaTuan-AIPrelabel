@@ -12,7 +12,6 @@
 | bicycle / bus / truck | YOLO26m | 0.30 | Số lượng vật thể trong 4 ảnh gold quá ít (< 5 vật: bicycle=3, bus=1, truck=0); tuân thủ đúng quy tắc thống kê mẫu nhỏ: không chọn ngưỡng riêng mà giữ mặc định 0.30. |
 | three_wheeler | YOLOE-26s, prompt: tuk-tuk, cyclo, cargo tricycle | 0.25 | Tại conf 0.25-0.30 recall đạt tối đa 85.7% (6/7 vật trên gold). YOLOE giải quyết điểm mù của YOLO26 cho xe ba bánh địa phương. Dẫn run `r03` & `r06`. |
 
-- Lệnh `merge_prelabels.py` đã dùng (dán nguyên): `python scripts/merge_prelabels.py work/prelabel/yoloe_all/pre.coco.json work/prelabel/y26_all/pre.coco.json --thr "three_wheeler=0.25,person=0.3,motorbike=0.3,car=0.3" --conf 0.3 --iou 0.6 --split "batch,gold" --out work/prelabel/merged_review/pre.coco.json`
 - **Phiên bản SAM bạn chọn** (SAM 1 / 2.1 / 3) và lý do: Chọn **SAM 2.1** (`sam2.1_b.pt`). Lý do: Cho đường viền polygon sắc nét, bám sát mép nan hoa và vòm mui xe trên ảnh phố châu Á, cân bằng tối ưu giữa độ chính xác hình học và tài nguyên máy; không yêu cầu duyệt quyền truy cập phức tạp như SAM 3.
 - Lỗi nào **không sửa được bằng đổi ngưỡng** (ví dụ tuk-tuk bị gọi `car`)? Sửa thế nào? Lỗi gán sai ngữ nghĩa lớp (semantic misclassification) do detector danh mục đóng COCO (YOLO26) không có nhãn `three_wheeler` nên gán nhầm thành `car` hoặc `truck`. Lỗi này không thể sửa bằng cách nâng hay hạ ngưỡng conf (nâng ngưỡng thì mất hẳn xe, hạ ngưỡng thì thêm box rác). Cách sửa: Kết hợp mô hình open-vocabulary (YOLOE-26s) với prompt chuyên biệt (`tuk-tuk`, `cyclo`, `cargo tricycle`) và dùng `merge_prelabels.py` ưu tiên lớp `three_wheeler` đè lên `car`/`truck` khi IoU >= 0.6.
 - Box **điểm cao mà sai** hoặc **điểm thấp mà đúng** (ảnh nào):
@@ -24,27 +23,41 @@
 
 | Trạng thái | Số | Tỉ lệ | Mẫu số |
 |---|---|---|---|
-| accepted | <<>> | <<>> | <<box máy>> |
-| edited | <<>> | <<>> | <<>> |
-| deleted | <<>> | <<>> | <<>> |
-| added | <<>> | <<>> | <<đối tượng sau duyệt>> |
+| accepted | 322 | 74.4% | 433 box máy |
+| edited | 25 | 5.8% | 433 box máy |
+| deleted | 63 | 14.5% | 433 box máy |
+| added | 27 | 7.2% | 374 đối tượng sau duyệt |
 
-- Lớp nào máy tệ nhất? Vì sao (dẫn ảnh)? <<>>
-- So với gold: precision / recall của **máy** <<>> (mẫu số: <<đối tượng gold>>)
+- Lớp nào máy tệ nhất? Vì sao (dẫn ảnh)?
+  - Máy tệ nhất ở lớp `three_wheeler`: có 11 box bị deleted (chiếm 44% tổng số 25 box máy của lớp này) và 7 box bị edited; chỉ có 7 box được accepted. Nguyên nhân do YOLOE phát hiện box bị lỏng hoặc nhận diện nhầm xe bán tải/ô tô con thành xe ba bánh (ví dụ trên `img_006.jpg`, `img_009.jpg`).
+  - Lớp `truck` cũng bị xóa 5/7 box máy do YOLO26 nhận diện nhầm xe bán tải hoặc xe ba gác thành truck.
+  - Lớp `person` bị xóa 32 box máy do máy bắt nhầm người ở xa quá nhỏ (< 20px) hoặc các cấu trúc pano/bóng đổ.
+  - *Lưu ý về đổi lớp:* Trong số deleted + added có 6 trường hợp là đổi lớp (máy gán sai lớp, box đúng vị trí). Số đối tượng máy sót thật sự là 21 vật (27 added - 6 đổi lớp).
+- So với gold: precision / recall của **máy** đạt 54.5% / 78.3% (mẫu số: 46 đối tượng gold; TP=36, FP=30, FN=10; KTC 95% Precision: 43–66%, Recall: 64–88%).
 
 ## 3. Thiên kiến tự động hóa và ảnh bẫy
 
-- Bắt bẫy: <<.../12>>; loại nào lọt: <<>>; vì sao (bạn đã bỏ bước nào của checklist)? <<>>
-- Accepted cao mà bắt bẫy thấp (hoặc ngược lại) nói gì về cách bạn duyệt? <<>>
+- Bắt bẫy: 6/12 = 50.0% (KTC 95%: 25–75%).
+  - Chi tiết từng loại bẫy:
+    - `extra`: bắt được 3/3 = 100% (xóa sạch toàn bộ box ma ở nền trống).
+    - `loose`: bắt được 2/3 = 66.7% (kéo lại viền ôm sát vật, lọt 1 bẫy ở `img_009.jpg`).
+    - `missing`: bắt được 1/3 = 33.3% (vẽ thêm vật bị máy xóa, lọt 2 bẫy ở `img_028.jpg` và `img_034.jpg`).
+    - `wrong_class`: bắt được 0/3 = 0.0% (lọt cả 3 bẫy ở `img_027.jpg`, `img_006.jpg`, `img_035.jpg`).
+  - Vì sao lọt:
+    - *Lọt wrong_class:* Do hiệu ứng "neo nhãn" (anchor bias). Khi thấy box bao quanh đối tượng hợp lý, mắt người duyệt có xu hướng tin tưởng vị trí và bỏ qua việc kiểm tra lại tên nhãn lớp (`motorbike` vs `bicycle`, `car` vs `truck`).
+    - *Lọt missing:* Do người duyệt bỏ qua Bước 0 (quét ảnh trước khi bật nhãn), nên khi AI không vẽ box thì mắt người duyệt cũng dễ dàng lướt qua theo gợi ý của máy.
+- Accepted cao mà bắt bẫy thấp (hoặc ngược lại) nói gì về cách bạn duyệt? Tỉ lệ accepted đạt tới 74.4% nhưng tỉ lệ bắt bẫy chỉ đạt 50.0% (dưới chuẩn 80%) chứng minh rõ ràng sự tồn tại của **thiên kiến tự động hóa (Automation Bias)**: người duyệt có xu hướng tin tưởng thụ động vào các đề xuất của AI, duyệt nhanh và "gật đầu" chấp thuận các box có sẵn mà chưa soi kỹ từng cạnh viền và lớp nhãn theo đúng checklist 4 bước.
 
 ## 4. Máy có đáng dùng không?
 
-- Thời gian (từ `time_log.csv`): gán tay <<... phút/ảnh>> vs duyệt <<... phút/ảnh>>. Thiên lệch (bạn gán gold trước nên đã quen cảnh): <<>>
-- Kết luận: <<có / không / chỉ cho lớp nào>>, dựa trên <<số liệu>>
+- Thời gian (từ `time_log.csv`): gán tay 2.50 phút/ảnh (10 phút / 4 ảnh gold) vs duyệt có pre-label 1.25 phút/ảnh (30 phút / 24 ảnh batch).
+  - Tốc độ duyệt nhanh hơn gấp 2.0 lần, giúp tiết kiệm 50.0% thời gian so với gán tay hoàn toàn.
+  - *Thiên lệch:* Người duyệt đã gán 4 ảnh gold trước đó nên đã quen thuộc bối cảnh phố châu Á, cộng thêm việc duyệt có sẵn khung hình giúp giảm bớt thao tác kéo chuột vẽ mới từ đầu.
+- Kết luận: Có đáng dùng, đặc biệt rất hiệu quả cho các lớp cơ bản có độ chính xác cao (`person`, `motorbike`, `car`) vì giúp tăng gấp đôi năng suất làm việc; tuy nhiên đối với các lớp đặc thù như `three_wheeler` hay vật thể ở xa bị che khuất thì bắt buộc phải kiểm tra kỹ lưỡng vì AI thường xuyên sai lớp hoặc bỏ sót.
 - **Ba quy tắc giảm thiên kiến của bạn** (mỗi quy tắc kiểm tra được bằng số hoặc việc làm):
-  1. <<>>
-  2. <<>>
-  3. <<>>
+  1. *Quy tắc quét mù (Blind Scan):* Ẩn toàn bộ nhãn máy (bật/tắt nút mắt trong CVAT) và dành ít nhất 15 giây quét đếm nhẩm số lượng từng lớp trên 100% số ảnh trước khi cho hiển thị nhãn máy.
+  2. *Quy tắc kiểm duyệt phân lớp (Class Filter Review):* Sử dụng tính năng Filters trên CVAT để lọc và rà soát độc lập từng lớp đối tượng (đặc biệt là `three_wheeler` và `truck`) thay vì nhìn đồng thời toàn bộ 8 lớp, nhằm chặn đứng bẫy `wrong_class`.
+  3. *Quy tắc ngắt quãng tập trung (Interval Breaks):* Bắt buộc nghỉ ngơi 3–5 phút sau mỗi 8–10 ảnh duyệt để hồi phục độ tập trung thị giác, tránh hiện tượng mỏi mắt dẫn đến bấm accept hàng loạt (được kiểm chứng qua nhật ký thời gian `time_log.csv`).
 
 ## 5. Mask SAM cho 3 vật (Part 5)
 
