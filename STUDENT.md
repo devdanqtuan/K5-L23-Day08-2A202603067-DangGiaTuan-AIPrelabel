@@ -5,7 +5,7 @@
 - Lớp (L2 / L3 / khác): L23
 - Tài khoản GitHub: devdanqtuan
 - Repo bài nộp (URL): https://github.com/devdanqtuan/K5-L23-Day08-2A202603067-DangGiaTuan-AIPrelabel
-- Commit chốt bài (hash): [cập nhật sau khi hoàn thành toàn bộ bài lab]
+- Commit chốt bài (hash): b2998cafca99327dc59ba7aa57279ed4f55a02f8
 - Máy: Windows 11, NVIDIA GeForce RTX 4060 Laptop GPU (8GB, CUDA 12.7)
 - CVAT (Docker): v2.74.1
 
@@ -15,5 +15,5 @@
 - So với gold: precision / recall của **máy** 54.5% (36/66) / 78.3% (36/46)
 - Bắt bẫy: 6/12 = 50.0%
 - Thời gian: gán tay 2.5 phút/ảnh; duyệt có pre-label 1.25 phút/ảnh
-- Lỗi QC: <<...% theo ảnh (.../...)>>, <<...% theo đối tượng (.../...)>>
-- **Quyết định:** <<Release / Hold / Rework>> — lý do một dòng: <<...>>
+- Lỗi QC: 40.0% theo ảnh (2/5), 2.4% theo đối tượng (2/83)
+- **Quyết định:** Rework — lý do một dòng: Tỉ lệ ảnh lỗi QC 40.0% > 2% và tỉ lệ bắt bẫy 50.0% < 80% do ảnh hưởng của thiên kiến tự động hóa

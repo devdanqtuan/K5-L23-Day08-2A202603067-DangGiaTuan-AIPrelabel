@@ -63,27 +63,46 @@
 
 | Ảnh | SAM (phiên bản) | Số click | Mask gồm người lái / hàng hoá? | Lỗi quan sát | File trong `masks/` |
 |---|---|---|---|---|---|
-| <<img_0xx>> | <<>> | <<>> | <<>> | <<>> | <<>> |
+| `img_013.jpg` | SAM 2.1 (`sam2.1_b.pt`) | 3 (2 pos, 1 neg) | Điểm âm đã khoét bớt lưng áo người lái nhưng vẫn dính một phần đầu và tay | 1 click âm chưa đủ tách triệt để người lái khỏi buồng lái tuk-tuk; biên mui xe và bánh xe bám rất khít (1 polygon, 45.4% ảnh) | `tuktuk_img013_sam2.jpg` |
+| `img_013.jpg` | SAM 1 MobileSAM (`mobile_sam.pt`) | 3 (2 pos, 1 neg) | Tách được người lái tương tự nhưng mask xe bị khuyết | Mask bị phân mảnh thành 2 polygon riêng biệt (vùng mui và thân dưới bị đứt đoạn), viền nan hoa bánh xe mờ hơn | `tuktuk_img013_sam1.jpg` |
+| `img_004.jpg` | SAM 2.1 (`sam2.1_b.pt`) | 3 (2 pos, 1 neg) | Loại bỏ sạch người lái và xe bên cạnh | Điểm âm (465,450) chặn tốt xe bên cạnh nhưng viền kính chắn gió bị rách nhẹ (1 polygon, 13.3% ảnh) | `tuktuk_img004_sam2.jpg` |
+| `img_017.jpg` | SAM 2.1 (`sam2.1_b.pt`) | 3 (2 pos, 1 neg) | Không vướng người lái, ôm trọn thân xe tuk-tuk | Điểm âm ngăn mask lan sang xe máy phía sau; viền cản trước rất sắc nét (1 polygon, 12.1% ảnh) | `tuktuk_img017_sam2.jpg` |
 
-- Đối chiếu guideline mục 4.2: quy tắc nào giúp, quy tắc nào thiếu? <<>>
-- *(Tuỳ chọn)* Interactor SAM trong CVAT: làm được / không (lỗi gì, đã thử gì); khác gì offline: <<>>
+- Đối chiếu guideline mục 4.2: quy tắc nào giúp, quy tắc nào thiếu?
+  - *Quy tắc giúp:* Mục 4.2.1 (polygon bám đường biên nhìn thấy) và 4.2.4 (hai vật chạm nhau không chồng lên nhau) giúp định hướng rõ ràng việc tách riêng người lái (`person`) khỏi xe (`three_wheeler`). Điểm click âm (`--neg`) là công cụ hữu hiệu để thực thi việc này.
+  - *Quy tắc thiếu:* Guideline v1.0 chưa quy định cụ thể việc xử lý **kính chắn gió / khoảng trống nhìn xuyên qua khung xe** (lỗ thủng rỗng ruột) và chưa làm rõ bao nhiêu điểm âm là đủ để tách người lái khi ngồi trong buồng lái hở của tuk-tuk. Đây là đầu vào quan trọng cho Calibration v1.1.
+- *(Tuỳ chọn)* Interactor SAM trong CVAT: làm được / không (lỗi gì, đã thử gì); khác gì offline: Trên bản CVAT Docker cục bộ không kèm serverless Nuclio, công cụ AI Tools Interactor không có sẵn model; do đó phương pháp offline bằng CLI `sam2_points.py` kiểm soát toạ độ click (`--pos`, `--neg`) chính xác hơn, lặp lại được kết quả và hiển thị trực quan tỷ lệ diện tích che phủ.
 
 ## 6. Calibration (Part 6)
 
-- Số quyết định: <<>> (`calibration_decisions.csv`); quan trọng nhất (dẫn `CAL-xx`): <<>>
-- Quy tắc mới đã vào `guideline_v1.1_calibrated.md`: <<>>
-- Nguyên nhân gốc: <<guideline mơ hồ / chưa nắm quy tắc / máy>>
+- Số quyết định: 3 (`calibration_decisions.csv`); quan trọng nhất (dẫn `CAL-01`): Quy chuẩn toàn bộ phương tiện ba bánh có mui chở khách (tuk-tuk) và chở hàng (ba gác, xích lô) thành lớp `three_wheeler`, ưu tiên nhãn YOLOE đè lên `car`/`truck` của YOLO khi IoU >= 0.6 và kéo khít viền 4 cạnh.
+- Quy tắc mới đã vào `guideline_v1.1_calibrated.md`:
+  1. Phân định cơ chế vận hành xe đạp điện vs xe máy điện (CAL-02): có bàn đạp chân trợ lực tính là `bicycle`, thuần động cơ điện không bàn đạp tính là `motorbike`.
+  2. Xác lập tiêu chuẩn phân định giữa vẽ từng xe máy vs vùng `ignore_region` (CAL-03): nhận diện cá thể nhìn thấy >= 20% và cao >= 20px thì vẽ từng xe; chỉ gom `ignore_region` cho các cụm xe ở xa dính chùm không tách được.
+  3. Xử lý triệt để lỗi lặp xe ba bánh bị máy gọi là car/truck (CAL-01).
+- Nguyên nhân gốc: Kết hợp giữa **guideline v1.0 còn mở/mơ hồ** (chưa quy định xe đạp điện, tiêu chuẩn cụm xe kẹt) và **lỗi cố hữu của mô hình đóng** (YOLO26 mù xe ba bánh).
 
 ## 7. QC và quyết định (Part 6)
 
-- Mẫu: <<n>> ảnh (<<m>> ảnh `can_review` + <<k>> ngẫu nhiên, seed 42); người kiểm: bạn (**hạn chế**: bạn vừa là người duyệt).
-- Lỗi theo **đối tượng**: <<.../... = ...%>> · theo **ảnh**: <<.../... = ...%>> (ngưỡng Release ≤ 2%)
-- Top lỗi (trong: bỏ sót, thừa, sai lớp, sai vị trí/kích thước, sai thuộc tính, sai mask) + một ảnh ví dụ mỗi loại: <<>>
-- **Giới hạn mẫu nhỏ** (cận trên 95% trong `qc_report_auto.md`): <<>>
-- Script kiểm được / không kiểm được (ví dụ ôm sát, cùng bỏ sót với máy, theo checklist thật): <<>>
+- Mẫu: 5 ảnh (0 ảnh `can_review` + 5 ngẫu nhiên, seed 42); người kiểm: bạn (**hạn chế**: bạn vừa là người duyệt, vừa là người kiểm tra QC nên có thể có điểm mù chủ quan).
+- Lỗi theo **đối tượng**: 2/83 = 2.4% · theo **ảnh**: 2/5 = 40.0% (ngưỡng Release ≤ 2%).
+- Top lỗi: `sai_lop` chiếm 2/2 lỗi phát hiện (chiếm 100% lỗi):
+  - Ví dụ 1: Trên `img_006.jpg`, xe xích lô/xe ba bánh bị gán nhầm thành `bicycle` (bẫy wrong_class bị lọt).
+  - Ví dụ 2: Trên `img_035.jpg`, xe máy nhỏ ở xa bị gán nhầm thành `bicycle` (bẫy wrong_class bị lọt).
+- **Giới hạn mẫu nhỏ** (cận trên 95% trong `qc_report_auto.md`): Với 2 ảnh lỗi trong 5 ảnh mẫu, cận trên khoảng tin cậy Wilson 95% của tỉ lệ ảnh lỗi thật lên tới **77%**. Ngưỡng 2% không thể được chứng minh tuyệt đối bằng mẫu nhỏ 5 ảnh này.
+- Script kiểm được / không kiểm được:
+  - *Kiểm được:* cú pháp nhãn COCO, số lượng đối tượng, tỷ lệ ảnh lỗi trong mẫu, tính toán khoảng tin cậy Wilson, phát hiện các trường hợp bẫy bị lọt.
+  - *Không kiểm được:* độ ôm sát viền thực tế của box (bounding box có bị lỏng vài px không), các đối tượng ở hậu cảnh mà cả người lẫn máy cùng bỏ sót (không có trong gold), và việc người duyệt có thực hiện đúng quy trình quét mù 15 giây hay không.
 
-**Quyết định: <<Release / Hold / Rework>>**, ngày <<YYYY-MM-DD>>. Lý do (đi theo Hold → Rework → Release): <<>>
-Nếu Rework / Hold, việc cần làm tiếp: <<>>
+**Quyết định: REWORK**, ngày 2026-11-17.
+- Lý do (đi theo cây Hold → Rework → Release):
+  1. Tầng Hold: Đã chốt xong toàn bộ câu hỏi mở thành guideline v1.1, dữ liệu ảnh không có ảnh nào bị hỏng/lỗi file.
+  2. Tầng Rework: Tỉ lệ ảnh lỗi trong mẫu QC đạt 40.0% (2/5 ảnh) vượt xa ngưỡng tối đa cho phép là 2.0%; đồng thời tỉ lệ bắt bẫy chỉ đạt 50.0% (6/12 bẫy) dưới chuẩn 80.0% do ảnh hưởng của thiên kiến tự động hóa.
+  3. Theo đúng quy trình nghiêm ngặt: Lô nhãn không đủ điều kiện Release và bắt buộc phải **REWORK**.
+- Nếu Rework / Hold, việc cần làm tiếp:
+  1. Nạp lại 24 ảnh batch lên CVAT và thực hiện duyệt lại đợt 2.
+  2. Áp dụng triệt để Quy tắc quét mù 15s (ẩn nhãn máy trước khi duyệt) và sử dụng bộ lọc Filters trên CVAT soi riêng từng lớp (`three_wheeler`, `bicycle`, `truck`) để bắt triệt để các bẫy `wrong_class` và `missing`.
+  3. Kéo lại viền các box bị lỏng trên `img_009.jpg` và xuất bản vá `qc_fixed.json`.
 
 ## 8. Ghi chú cá nhân
 
@@ -91,5 +110,5 @@ Nếu Rework / Hold, việc cần làm tiếp: <<>>
 - Gold có bị nhiễm không (bạn có nhìn pre-label hay hỏi AI trước khi gán xong)? Không. 4 ảnh gold được gán tay độc lập 100% trên CVAT theo đúng guideline v1.0, tuyệt đối không chạy model hay nhìn trước pre-label.
 - Máy / GPU / CVAT dùng; vướng mắc cài đặt: Windows 11, GPU NVIDIA GeForce RTX 4060 Laptop (8GB VRAM, CUDA 12.7), CVAT v2.74.1 Docker local.
 - Dùng cache `data/cache/` thay vì tự chạy? Không, tự chạy các mô hình cục bộ.
-- Lỗi / bug script đã gặp (nếu có): <<cập nhật nếu có trong các part sau>>
-- Một điều bạn làm khác lần sau: <<cập nhật ở cuối bài>>
+- Lỗi / bug script đã gặp (nếu có): Không gặp lỗi nghiêm trọng; cần lưu ý bọc nháy kép các tham số có dấu phẩy trên PowerShell Windows.
+- Một điều bạn làm khác lần sau: Sẽ thực hiện nghiêm túc hơn bước ẩn nhãn máy quét trước để không bị thiên kiến tự động hóa đánh lừa ở các bẫy sai nhãn lớp.

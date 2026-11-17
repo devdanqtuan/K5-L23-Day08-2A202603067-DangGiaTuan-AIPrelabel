@@ -1,0 +1,6 @@
+image,object_id,error_type,reviewer,note
+img_003.jpg,,khong,DangGiaTuan,Ảnh sạch không có lỗi
+img_006.jpg,53,sai_lop,DangGiaTuan,Xích lô/xe ba bánh bị gán nhầm thành bicycle (bẫy wrong_class lọt)
+img_014.jpg,,khong,DangGiaTuan,Ảnh sạch không có lỗi
+img_031.jpg,,khong,DangGiaTuan,Ảnh sạch không có lỗi
+img_035.jpg,394,sai_lop,DangGiaTuan,Xe máy nhỏ ở xa bị gán nhầm thành bicycle (bẫy wrong_class lọt)
